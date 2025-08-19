@@ -2,7 +2,6 @@
 
 import { toast } from "sonner";
 import { redirect } from "next/navigation";
-import * as yup from "yup";
 import Link from "next/link";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -16,14 +15,7 @@ import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
-
-// Validation schema
-const schema = yup.object({
-  name: yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
-  email: yup.string().email("Invalid email format").required("Email is required"),
-  password: yup.string().required("Password is required").min(6, "Password must be at least 6 characters"),
-  termsAccepted: yup.boolean().required("You must accept the terms and conditions").oneOf([true], "You must accept the terms and conditions"),
-}).required();
+import { SIGNUP_SCHEMA } from "@/schema/formValidation/SIGNUP";
 
 type FormData = {
   name: string;
@@ -42,7 +34,7 @@ export default function SignUpForm() {
     setValue,
     watch,
   } = useForm<FormData>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(SIGNUP_SCHEMA),
     defaultValues: {
       name: "",
       email: "",
@@ -142,7 +134,7 @@ export default function SignUpForm() {
                 </span>
               </div>
             </div>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit)} >
               <div className="space-y-5">
                 <div>
                   <Label>

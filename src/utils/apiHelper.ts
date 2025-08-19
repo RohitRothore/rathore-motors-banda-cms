@@ -1,17 +1,16 @@
 'use server'
 
 import { cookies } from "next/headers";
-
-// lib/api-client.ts
-export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+import { objectToFormData } from "./objectToFormData";
 
 interface ApiOptions<TBody = unknown> {
-  method?: HttpMethod;
+  method?: string;
   body?: TBody;
   headers?: Record<string, string>;
   cache?: RequestCache; // e.g., "no-store" for SSR
   next?: NextFetchRequestConfig; // for revalidation in Next.js
   authenticate?: boolean; // whether to include auth token
+  isMultipartFormData?: boolean; // new option for file uploads
 }
 
 interface ApiError {
@@ -21,7 +20,7 @@ interface ApiError {
   details?: unknown;
 }
 
-export type ApiResult<T> = { data?: T; error?: ApiError, success?: boolean };
+export type ApiResult<T> = { data?: T; error?: ApiError; success?: boolean };
 
 export async function api<TResponse, TBody = unknown>(
   endpoint: string,
@@ -34,32 +33,35 @@ export async function api<TResponse, TBody = unknown>(
     cache,
     next,
     authenticate = false,
+    isMultipartFormData = false,
   } = options;
 
   let token;
   if (authenticate) {
-    // Read token from server-side cookie
     const cookieToken = (await cookies()).get("token")?.value;
-    if (cookieToken) {
-      token = cookieToken;
-    }
+    if (cookieToken) token = cookieToken;
   }
-
+  
   try {
+const finalBody = body
+  ? isMultipartFormData
+    ? objectToFormData(body as Record<string, any>)
+    : JSON.stringify(body)
+  : undefined;
+console.log('finalBody', finalBody)
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
       method,
-      credentials: authenticate ? 'include' : 'same-origin',
+      credentials: authenticate ? "include" : "same-origin",
       headers: {
-        "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(!isMultipartFormData ? { "Content-Type": "application/json" } : {}),
         ...headers,
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: finalBody,
       cache,
       next,
     });
 
-    console.log('res', res)
     const contentType = res.headers.get("content-type");
     const isJson = contentType?.includes("application/json");
 
@@ -78,9 +80,7 @@ export async function api<TResponse, TBody = unknown>(
             details: errData,
             success: errData.success,
           };
-        } catch {
-          // ignore parsing errors
-        }
+        } catch {}
       }
 
       return { error };
@@ -88,7 +88,7 @@ export async function api<TResponse, TBody = unknown>(
 
     if (isJson) {
       try {
-        const data = await res.json() as TResponse;
+        const data = (await res.json()) as TResponse;
         return { data, success: true };
       } catch {
         return {
@@ -101,7 +101,6 @@ export async function api<TResponse, TBody = unknown>(
     }
 
     return { data: {} as TResponse, success: false };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return {
       error: {
