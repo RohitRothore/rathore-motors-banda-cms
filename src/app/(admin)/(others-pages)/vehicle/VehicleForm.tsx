@@ -102,7 +102,7 @@ const onSubmit: Parameters<typeof handleSubmit>[0] = async (data) => {
 
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" datatype="multipart/form-data">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" >
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <Label>

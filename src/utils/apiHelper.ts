@@ -41,11 +41,11 @@ export async function api<TResponse, TBody = unknown>(
     const cookieToken = (await cookies()).get("token")?.value;
     if (cookieToken) token = cookieToken;
   }
-  
+
   try {
 const finalBody = body
   ? isMultipartFormData
-    ? objectToFormData(body as Record<string, any>)
+    ? objectToFormData(body as Record<string, unknown>)
     : JSON.stringify(body)
   : undefined;
 console.log('finalBody', finalBody)
