@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { forwardRef } from "react";
 
 interface InputProps {
   type?: "text" | "number" | "email" | "password" | "date" | "time" | string;
@@ -7,9 +7,10 @@ interface InputProps {
   placeholder?: string;
   defaultValue?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   className?: string;
-  min?: string;
-  max?: string;
+  min?: string | number;
+  max?: string | number;
   step?: number;
   disabled?: boolean;
   success?: boolean;
@@ -17,13 +18,14 @@ interface InputProps {
   hint?: string; // Optional hint text
 }
 
-const Input: FC<InputProps> = ({
+const Input = forwardRef<HTMLInputElement, InputProps>(({
   type = "text",
   id,
   name,
   placeholder,
   defaultValue,
   onChange,
+  onBlur,
   className = "",
   min,
   max,
@@ -32,7 +34,7 @@ const Input: FC<InputProps> = ({
   success = false,
   error = false,
   hint,
-}) => {
+}, ref) => {
   // Determine input styles based on state (disabled, success, error)
   let inputClasses = `h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className}`;
 
@@ -56,11 +58,13 @@ const Input: FC<InputProps> = ({
         placeholder={placeholder}
         defaultValue={defaultValue}
         onChange={onChange}
+        onBlur={onBlur}
         min={min}
         max={max}
         step={step}
         disabled={disabled}
         className={inputClasses}
+        ref={ref}
       />
 
       {/* Optional Hint Text */}
@@ -79,6 +83,8 @@ const Input: FC<InputProps> = ({
       )}
     </div>
   );
-};
+});
+
+Input.displayName = "Input";
 
 export default Input;

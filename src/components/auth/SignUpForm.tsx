@@ -1,14 +1,73 @@
 "use client";
+
+import { toast } from "sonner";
+import { redirect } from "next/navigation";
+import * as yup from "yup";
+import Link from "next/link";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+
+import { User } from "@/types/user";
+
+import { registerUser } from "@/api/user/register";
+
 import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
-import Link from "next/link";
-import React, { useState } from "react";
+
+// Validation schema
+const schema = yup.object({
+  name: yup.string().required("Name is required").min(2, "Name must be at least 2 characters"),
+  email: yup.string().email("Invalid email format").required("Email is required"),
+  password: yup.string().required("Password is required").min(6, "Password must be at least 6 characters"),
+  termsAccepted: yup.boolean().required("You must accept the terms and conditions").oneOf([true], "You must accept the terms and conditions"),
+}).required();
+
+type FormData = {
+  name: string;
+  email: string;
+  password: string;
+  termsAccepted: boolean;
+};
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+  } = useForm<FormData>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      termsAccepted: false,
+    },
+  });
+
+  const termsAccepted = watch("termsAccepted");
+
+  const onSubmit = async (data: FormData) => {
+      const userData: User = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      };
+        const response = await registerUser(userData);
+        if (response.success) {
+          toast.success("Registration successful!");
+          redirect("/")
+        } else {
+          toast.error(response.error?.message || "Registration failed. Please try again.");
+        }
+  };
+
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full overflow-y-auto no-scrollbar">
       <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
@@ -83,35 +142,25 @@ export default function SignUpForm() {
                 </span>
               </div>
             </div>
-            <form>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {/* <!-- First Name --> */}
-                  <div className="sm:col-span-1">
-                    <Label>
-                      First Name<span className="text-error-500">*</span>
-                    </Label>
-                    <Input
-                      type="text"
-                      id="fname"
-                      name="fname"
-                      placeholder="Enter your first name"
-                    />
-                  </div>
-                  {/* <!-- Last Name --> */}
-                  <div className="sm:col-span-1">
-                    <Label>
-                      Last Name<span className="text-error-500">*</span>
-                    </Label>
-                    <Input
-                      type="text"
-                      id="lname"
-                      name="lname"
-                      placeholder="Enter your last name"
-                    />
-                  </div>
+                <div>
+                  <Label>
+                    Name<span className="text-error-500">*</span>
+                  </Label>
+                  <Input
+                    type="text"
+                    id="name"
+                    placeholder="Enter your name"
+                    {...register("name")}
+                    error={!!errors.name}
+                  />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
+                  )}
                 </div>
-                {/* <!-- Email --> */}
+                
+                {/* Email */}
                 <div>
                   <Label>
                     Email<span className="text-error-500">*</span>
@@ -119,11 +168,16 @@ export default function SignUpForm() {
                   <Input
                     type="email"
                     id="email"
-                    name="email"
                     placeholder="Enter your email"
+                    {...register("email")}
+                    error={!!errors.email}
                   />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
+                  )}
                 </div>
-                {/* <!-- Password --> */}
+                
+                {/* Password */}
                 <div>
                   <Label>
                     Password<span className="text-error-500">*</span>
@@ -132,6 +186,8 @@ export default function SignUpForm() {
                     <Input
                       placeholder="Enter your password"
                       type={showPassword ? "text" : "password"}
+                      {...register("password")}
+                      error={!!errors.password}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -144,13 +200,17 @@ export default function SignUpForm() {
                       )}
                     </span>
                   </div>
+                  {errors.password && (
+                    <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>
+                  )}
                 </div>
-                {/* <!-- Checkbox --> */}
+                
+                {/* Checkbox */}
                 <div className="flex items-center gap-3">
                   <Checkbox
                     className="w-5 h-5"
-                    checked={isChecked}
-                    onChange={setIsChecked}
+                    checked={termsAccepted || false}
+                    onChange={(checked) => setValue("termsAccepted", checked)}
                   />
                   <p className="inline-block font-normal text-gray-500 dark:text-gray-400">
                     By creating an account means you agree to the{" "}
@@ -163,10 +223,18 @@ export default function SignUpForm() {
                     </span>
                   </p>
                 </div>
-                {/* <!-- Button --> */}
+                {errors.termsAccepted && (
+                  <p className="text-sm text-red-500">{errors.termsAccepted.message}</p>
+                )}
+                
+                {/* Button */}
                 <div>
-                  <button className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
-                    Sign Up
+                  <button 
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? "Signing up..." : "Sign Up"}
                   </button>
                 </div>
               </div>
