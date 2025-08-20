@@ -1,7 +1,7 @@
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import VehicleForm from "@/components/page/vehicle/VehicleForm";
 import { Metadata } from "next";
 import React from "react";
-import VehicleForm from "./VehicleForm";
 
 export const metadata: Metadata = {
   title: "Create Vehicle",

@@ -24,6 +24,7 @@ import Select from "@/components/form/Select";
 import { getVehicleDetails } from "@/api/vehicle/getVehicleDetail";
 import { useParams } from "next/navigation";
 import DropzoneComponent from "@/components/form/form-elements/DropZone";
+import Button from "@/components/ui/button/Button";
 
 export default function VehicleForm() {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +48,7 @@ export default function VehicleForm() {
       price: undefined as unknown as number,
       kmDriven: undefined,
       mileage: undefined,
-      status: "Available",
+      status: undefined,
       images: [],
       imagesFiles: undefined,
     },
@@ -89,7 +90,7 @@ export default function VehicleForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
-        <div className="rounded-2xl border border-gray-200 lg:col-span-3 grid gap-y-3 gap-x-5 lg:grid-cols-2 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] xl:p-8">
+        <div className="rounded-2xl self-start border border-gray-200 lg:col-span-3 grid gap-y-3 gap-x-5 lg:grid-cols-2 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] xl:p-8">
           <Input
             placeholder="e.g. 2019 Honda City VX"
             {...register("title")}
@@ -213,24 +214,19 @@ export default function VehicleForm() {
             error={!!errors.status}
           />
         </div>
-        <div className="rounded-2xl border border-gray-200 lg:col-span-2 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] xl:p-8">
-          <DropzoneComponent
-            onFilesSelected={(files) =>
-              setValue("imagesFiles", files, { shouldValidate: true })
-            }
-            error={errors.imagesFiles?.message}
-            title="Images (max 10)"
-          />
-        </div>
+        <DropzoneComponent
+          onFilesSelected={(files) =>
+            setValue("imagesFiles", files, { shouldValidate: true })
+          }
+          error={errors.imagesFiles?.message}
+          title="Images (max 10)"
+          className="lg:col-span-2"
+        />
       </div>
-      <div>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex w-full items-center justify-center rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-        >
+      <div className="bg-white dark:bg-white/[0.03] p-5 w-full flex justify-end sticky bottom-4 lg:p-8 border rounded-lg">
+        <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Creating..." : "Create Vehicle"}
-        </button>
+        </Button>
       </div>
     </form>
   );

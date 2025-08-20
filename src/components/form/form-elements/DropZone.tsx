@@ -1,18 +1,31 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import ComponentCard from "../../common/ComponentCard";
 import { useDropzone } from "react-dropzone";
+import Image from "next/image";
+import { CloseIcon } from "@/icons";
+import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 
 interface DropzoneComponentProps {
   onFilesSelected: (files: File[]) => void;
   error?: string;
-  title: string
+  title: string;
+  className?: string;
 }
 
-const DropzoneComponent: React.FC<DropzoneComponentProps> = ({ onFilesSelected, error, title }) => {
+const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
+  onFilesSelected,
+  error,
+  title,
+  className = "",
+}) => {
+  const [files, setFiles] = useState<File[]>([]);
+  const [modal, setModal] = useState<File | null>(null);
+
   const onDrop = (acceptedFiles: File[]) => {
     console.log("Files dropped:", acceptedFiles);
+    setFiles((prev) => [...prev, ...acceptedFiles]); // keep adding
     onFilesSelected(acceptedFiles);
   };
 
@@ -29,14 +42,15 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({ onFilesSelected, 
   });
 
   return (
-    <ComponentCard title={title}>
+    <ComponentCard className={className} title={title}>
       <div className="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-brand-500 dark:border-gray-700 rounded-xl hover:border-brand-500">
         <div
           {...getRootProps()}
           className={`dropzone rounded-xl border-dashed border-gray-300 p-7 lg:p-10
-            ${isDragActive
-              ? "border-brand-500 bg-gray-100 dark:bg-gray-800"
-              : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
+            ${
+              isDragActive
+                ? "border-brand-500 bg-gray-100 dark:bg-gray-800"
+                : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
             }`}
         >
           <input {...getInputProps()} />
@@ -61,6 +75,50 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({ onFilesSelected, 
 
         {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
       </div>
+      {/* Preview Section */}
+      {files.length > 0 && (
+        <div className="mt-4 grid lg:grid-cols-2 gap-4 pr-4 pt-4 max-h-96 overflow-y-auto overflow-x-hidden custom-scrollbar">
+          {files.map((file, index) => (
+            <div
+              key={index}
+              className="relative flex gap-4 cursor-pointer rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+              onClick={() => setModal(file)}
+            >
+              <Image
+                src={URL.createObjectURL(file)}
+                alt={file.name}
+                className="h-28 w-full object-cover rounded-md"
+                width={112}
+                height={112}
+              />
+              <div
+                className="absolute -top-3 z-10 -right-3 bg-error-50 border cursor-pointer border-error-500 rounded-full"
+                onClick={() =>
+                  setFiles((prev) => prev.filter((_, i) => i !== index))
+                }
+              >
+                <CloseIcon className="fill-error-500" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {modal && (
+        <ResponsiveModal
+          isOpen={!!modal}
+          cancelHandler={() => setModal(null)}
+          bottomSheetProps={{ heading: modal.name as string }}
+          modalProps={{ title: modal.name as string, size: "lg" }}
+        >
+          <Image
+            src={URL.createObjectURL(modal)}
+            alt={modal.name}
+            className="h-full w-full object-cover pb-4 rounded-md"
+            width={512}
+            height={512}
+          />
+        </ResponsiveModal>
+      )}
     </ComponentCard>
   );
 };
