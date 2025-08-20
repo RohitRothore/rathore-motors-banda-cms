@@ -52,15 +52,14 @@ export const VEHICLE_SCHEMA = yup
       .mixed<"Available" | "Sold">()
       .oneOf(["Available", "Sold"], "Select status")
       .required("Status is required"),
-    imagesInput: yup.string().trim().optional(),
     images: yup.array().of(yup.string().url("Image URL must be valid")).optional(),
     imagesFiles: yup
-      .mixed<FileList>()
+      .mixed<File[]>()
       .test("file-count", "At least one image is required", function (value) {
-        const hasFiles = value && (value as FileList).length > 0;
-        const imagesInput = this.parent.imagesInput as string | undefined;
-        const hasUrls = !!imagesInput && imagesInput.split(",").map((s) => s.trim()).filter(Boolean).length > 0;
-        return hasFiles || hasUrls; // require at least one source
+        const hasFiles = value && (value as File[]).length > 0;
+        const images = this.parent.images;
+        const hasImages = images && images.length > 0;
+        return hasFiles || hasImages;
       })
       .optional(),
   })

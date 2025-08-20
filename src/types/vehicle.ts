@@ -11,4 +11,5 @@ export interface Vehicle {
   title: string;
   vehicleType: "Car" | "Truck" | "Bike" | "SUV" | "Van";
   year: number;
+  imagesFiles?: File[];
 }

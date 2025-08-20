@@ -101,6 +101,7 @@ console.log('finalBody', finalBody)
     }
 
     return { data: {} as TResponse, success: false };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     return {
       error: {
